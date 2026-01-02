@@ -30,6 +30,7 @@
 
 #if defined( HAVE_STDLIB_H ) || defined( WINAPI )
 #include <stdlib.h>
+#include <io.h>
 #endif
 
 #include "evtxtools_getopt.h"

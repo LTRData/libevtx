@@ -176,3 +176,16 @@ stamp-h[1-9]
 /libregf
 /libuna
 /libwrc
+
+*.tlog
+*.pdb
+.vs
+Release
+Debug
+Backup
+*.ilk
+*.user
+
+**/VSDebug
+**/Debug
+**/Release
