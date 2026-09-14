@@ -1,16 +1,123 @@
 libevtx is a library to access the Windows XML Event Log (EVTX) format.
 
+LTRData fork
+============
+
+This is LTRData's fork of libyal/libevtx:
+https://github.com/libyal/libevtx
+
+The repository retains the upstream library, tools and documentation, with
+changes for native-library integration and Windows builds. Recent LTRData work
+includes MSVC build fixes and DLL export configuration changes. The history also
+contains upstream updates to record access, including channel names and handling
+of records without a computer name.
+
+For issues specific to this fork, use:
+https://github.com/LTRData/libevtx/issues
+
 Project information:
 
 * Status: alpha
 * Licence: LGPLv3+
 
-Planned:
+See COPYING, COPYING.LESSER, AUTHORS and the individual source headers for
+licensing and attribution.
 
-* Multi-threading support
 
-For more information see:
+Components and usage
+--------------------
+
+* libevtx: native C library for reading EVTX files, record metadata, XML record
+  representations and recovered records where available.
+* evtxinfo: displays information about an EVTX file.
+* evtxexport: exports records as text or XML, with separate modes for allocated
+  records, recovered records, or both.
+* pyevtx: Python bindings, built when Python support is enabled.
+
+For example, using the built command-line tools:
+
+    evtxinfo System.evtx
+    evtxexport -f xml -m items System.evtx
+    evtxexport -f xml -m recovered System.evtx
+
+The default export format is text and the default mode is "items"; "-m all"
+includes both allocated and recovered records. Recovery depends on the data
+remaining in the file.
+
+Rendering event messages can require the corresponding message resource files
+and Windows Registry hives. evtxexport provides -p for the resource search path,
+-r for a directory containing SYSTEM and SOFTWARE hives, and -s/-S for explicit
+hive files. Use "evtxinfo -h" and "evtxexport -h" for the complete current options.
+
+
+Native API and Windows integration
+----------------------------------
+
+The public C API is described in include/libevtx.h.in. Record access includes:
+
+* UTF-8 and UTF-16 channel-name getters and size queries:
+  libevtx_record_get_utf8_channel_name() and its _size counterpart;
+  libevtx_record_get_utf16_channel_name() and its _size counterpart.
+* UTF-8 and UTF-16 computer-name getters and size queries. A missing name is
+  reported as unavailable (return value 0), rather than necessarily an error.
+* XML string access and separate file APIs for allocated and recovered records.
+
+For optional string values, check the return value before allocating or reading
+the result. The documented convention is 1 for success, 0 when unavailable and
+-1 on error; string-size queries include the terminating null character.
+
+Windows DLL export settings are configured in the MSVC projects and the shared
+msvscpp/libevtx.props file, which now defines FULL_DLL_EXPORT. Use matching
+headers and binaries from the fork when consuming its native exports.
+
+Multi-threading support was listed as planned in the original README. Although
+the build configuration has threading-library and multi-threading options,
+those options do not establish thread-safety for shared file or record handles.
+Serialize access to a shared handle rather than assuming concurrent calls are
+supported.
+
+
+Building and testing
+--------------------
+
+The checked-in configurations describe the dependencies and build/test sequences:
+https://github.com/LTRData/libevtx/tree/main/.github/workflows
+https://github.com/LTRData/libevtx/blob/main/appveyor.yml
+
+For a Unix source checkout, install the compiler, Autotools and dependencies
+listed for the relevant platform, then run from the repository root:
+
+    tests/build.sh
+
+This helper runs synclibs.sh --use-head, autogen.sh, configure and make. It
+downloads the supporting libyal libraries from their development heads, so
+dependency contents can change between builds. Configure arguments can be
+passed to the helper; for Python bindings, install the Python development
+headers and use:
+
+    tests/build.sh --enable-python
+
+For the fixture-based test suite:
+
+    ./synctestdata.sh
+    tests/runtests.sh
+
+The GitHub workflows include Linux, FreeBSD and macOS configurations. The
+AppVeyor configuration includes Windows builds. On Windows, its MSVC sequence
+uses synclibs.ps1 and autogen.ps1, followed by build.ps1 and runtests.ps1.
+build.ps1 supports selecting VisualStudioVersion, Configuration, Platform and
+PythonPath; its default Visual Studio version is 2022. The tracked MSVC projects
+have configuration-specific toolsets, so use the build script and configuration
+appropriate to your installed tools. These configurations describe build routes,
+not a claim that every listed combination has been verified for this checkout.
+
+
+Upstream documentation
+----------------------
 
 * Project documentation: https://github.com/libyal/libevtx/wiki/Home
 * How to build from source: https://github.com/libyal/libevtx/wiki/Building
 
+The documentation/ directory contains format notes, and manuals/ contains the
+tool man pages. The upstream links remain the reference for the general libevtx
+project; the fork-specific integration context is described above.
